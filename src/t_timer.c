@@ -42,7 +42,7 @@ timer_proc( TimerClientData client_data, struct timeval* nowP )
 }
 
 
-int 
+int
 main(int argc, char **argv)
 {
     Timer *tp;

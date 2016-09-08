@@ -219,7 +219,7 @@ void
 tmr_reset( struct timeval* nowP, Timer* t )
 {
     struct timeval now;
-    
+
     getnow( nowP, &now );
     t->time = now;
     add_usecs( &t->time, t->usecs );

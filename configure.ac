@@ -24,7 +24,7 @@
 # file for complete information.
 
 # Initialize the autoconf system for the specified tool, version and mailing list
-AC_INIT(iperf, 3.1.3, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
+AC_INIT(iperf, 3.1, https://github.com/esnet/iperf, iperf, http://software.es.net/iperf/)
 AC_LANG(C)
 
 # Specify where the auxiliary files created by configure should go. The config
@@ -56,12 +56,6 @@ AC_HEADER_STDC
 
 # Check for systems which need -lsocket and -lnsl
 #AX_LIB_SOCKET_NSL
-
-# Check for the math library (needed by cjson on some platforms)
-AC_SEARCH_LIBS(floor, [m], [], [
-echo "floor()"
-exit 1
-])
 
 # Solaris puts nanosleep in -lrt
 AC_SEARCH_LIBS(nanosleep, [rt], [], [

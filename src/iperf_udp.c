@@ -31,13 +31,13 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 #include <sys/time.h>
-#include <sys/select.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -75,25 +75,25 @@ iperf_udp_recv(struct iperf_stream *sp)
     sp->result->bytes_received_this_interval += r;
 
     if (sp->test->udp_counters_64bit) {
-	memcpy(&sec, sp->buffer, sizeof(sec));
-	memcpy(&usec, sp->buffer+4, sizeof(usec));
-	memcpy(&pcount, sp->buffer+8, sizeof(pcount));
-	sec = ntohl(sec);
-	usec = ntohl(usec);
-	pcount = be64toh(pcount);
-	sent_time.tv_sec = sec;
-	sent_time.tv_usec = usec;
+        memcpy(&sec, sp->buffer, sizeof(sec));
+        memcpy(&usec, sp->buffer+4, sizeof(usec));
+        memcpy(&pcount, sp->buffer+8, sizeof(pcount));
+        sec = ntohl(sec);
+        usec = ntohl(usec);
+        pcount = be64toh(pcount);
+        sent_time.tv_sec = sec;
+        sent_time.tv_usec = usec;
     }
     else {
-	uint32_t pc;
-	memcpy(&sec, sp->buffer, sizeof(sec));
-	memcpy(&usec, sp->buffer+4, sizeof(usec));
-	memcpy(&pc, sp->buffer+8, sizeof(pc));
-	sec = ntohl(sec);
-	usec = ntohl(usec);
-	pcount = ntohl(pc);
-	sent_time.tv_sec = sec;
-	sent_time.tv_usec = usec;
+        uint32_t pc;
+        memcpy(&sec, sp->buffer, sizeof(sec));
+        memcpy(&usec, sp->buffer+4, sizeof(usec));
+        memcpy(&pc, sp->buffer+8, sizeof(pc));
+        sec = ntohl(sec);
+        usec = ntohl(usec);
+        pcount = ntohl(pc);
+        sent_time.tv_sec = sec;
+        sent_time.tv_usec = usec;
     }
 
     /* Out of order packets */
@@ -104,7 +104,7 @@ iperf_udp_recv(struct iperf_stream *sp)
         sp->packet_count = pcount;
     } else {
         sp->outoforder_packets++;
-	iperf_err(sp->test, "OUT OF ORDER - incoming packet = %zu and received packet = %d AND SP = %d", pcount, sp->packet_count, sp->socket);
+        iperf_err(sp->test, "OUT OF ORDER - incoming packet = %zu and received packet = %d AND SP = %d", pcount, sp->packet_count, sp->socket);
     }
 
     /* jitter measurement */
@@ -120,7 +120,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     sp->jitter += (d - sp->jitter) / 16.0;
 
     if (sp->test->debug) {
-	fprintf(stderr, "packet_count %d\n", sp->packet_count);
+        fprintf(stderr, "packet_count %d\n", sp->packet_count);
     }
 
     return r;
@@ -144,36 +144,36 @@ iperf_udp_send(struct iperf_stream *sp)
 
     if (sp->test->udp_counters_64bit) {
 
-	uint32_t  sec, usec;
-	uint64_t  pcount;
+        uint32_t  sec, usec;
+        uint64_t  pcount;
 
-	sec = htonl(before.tv_sec);
-	usec = htonl(before.tv_usec);
-	pcount = htobe64(sp->packet_count);
-	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
+        sec = htonl(before.tv_sec);
+        usec = htonl(before.tv_usec);
+        pcount = htobe64(sp->packet_count);
+
+        memcpy(sp->buffer, &sec, sizeof(sec));
+        memcpy(sp->buffer+4, &usec, sizeof(usec));
+        memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+
     }
     else {
 
-	uint32_t  sec, usec, pcount;
+        uint32_t  sec, usec, pcount;
 
-	sec = htonl(before.tv_sec);
-	usec = htonl(before.tv_usec);
-	pcount = htonl(sp->packet_count);
-	
-	memcpy(sp->buffer, &sec, sizeof(sec));
-	memcpy(sp->buffer+4, &usec, sizeof(usec));
-	memcpy(sp->buffer+8, &pcount, sizeof(pcount));
-	
+        sec = htonl(before.tv_sec);
+        usec = htonl(before.tv_usec);
+        pcount = htonl(sp->packet_count);
+
+        memcpy(sp->buffer, &sec, sizeof(sec));
+        memcpy(sp->buffer+4, &usec, sizeof(usec));
+        memcpy(sp->buffer+8, &pcount, sizeof(pcount));
+
     }
 
     r = Nwrite(sp->socket, sp->buffer, size, Pudp);
 
     if (r < 0)
-	return r;
+        return r;
 
     sp->result->bytes_sent += r;
     sp->result->bytes_sent_this_interval += r;
@@ -247,17 +247,17 @@ iperf_udp_accept(struct iperf_test *test)
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is available and not disabled, try it. */
     if (! test->no_fq_socket_pacing) {
-	/* Convert bits per second to bytes per second */
-	unsigned int rate = test->settings->rate / 8;
-	if (rate > 0) {
-	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", rate);
-	    }
-	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
-		warning("Unable to set socket pacing, using application pacing instead");
-		test->no_fq_socket_pacing = 1;
-	    }
-	}
+        /* Convert bits per second to bytes per second */
+        unsigned int rate = test->settings->rate / 8;
+        if (rate > 0) {
+            if (test->debug) {
+                printf("Setting fair-queue socket pacing to %u\n", rate);
+            }
+            if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+                warning("Unable to set socket pacing, using application pacing instead");
+                test->no_fq_socket_pacing = 1;
+            }
+        }
     }
 #endif /* HAVE_SO_MAX_PACING_RATE */
 
@@ -270,11 +270,17 @@ iperf_udp_accept(struct iperf_test *test)
         return -1;
     }
 
-    FD_SET(test->prot_listener, &test->read_set);
-    test->max_fd = (test->max_fd < test->prot_listener) ? test->prot_listener : test->max_fd;
+    struct epoll_event ev;
+    ev.events=EPOLLIN;
+    ev.data.fd = test->prot_listener;
+
+    if(epoll_ctl(test->epoll_fd, EPOLL_CTL_ADD, test->prot_listener, &ev)==-1) {
+        perror("epoll_ctl: prot_listener register failed");
+        return -1;
+    }
 
     /* Let the client know we're ready "accept" another UDP "stream" */
-    buf = 987654321;		/* any content will work here */
+    buf = 987654321;                /* any content will work here */
     if (write(s, &buf, sizeof(buf)) < 0) {
         i_errno = IESTREAMWRITE;
         return -1;
@@ -346,17 +352,17 @@ iperf_udp_connect(struct iperf_test *test)
 #if defined(HAVE_SO_MAX_PACING_RATE)
     /* If socket pacing is available and not disabled, try it. */
     if (! test->no_fq_socket_pacing) {
-	/* Convert bits per second to bytes per second */
-	unsigned int rate = test->settings->rate / 8;
-	if (rate > 0) {
-	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", rate);
-	    }
-	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
-		warning("Unable to set socket pacing, using application pacing instead");
-		test->no_fq_socket_pacing = 1;
-	    }
-	}
+        /* Convert bits per second to bytes per second */
+        unsigned int rate = test->settings->rate / 8;
+        if (rate > 0) {
+            if (test->debug) {
+                printf("Setting fair-queue socket pacing to %u\n", rate);
+            }
+            if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+                warning("Unable to set socket pacing, using application pacing instead");
+                test->no_fq_socket_pacing = 1;
+            }
+        }
     }
 #endif /* HAVE_SO_MAX_PACING_RATE */
 
@@ -371,9 +377,9 @@ iperf_udp_connect(struct iperf_test *test)
      * Write a datagram to the UDP stream to let the server know we're here.
      * The server learns our address by obtaining its peer's address.
      */
-    buf = 123456789;		/* this can be pretty much anything */
+    buf = 123456789;                /* this can be pretty much anything */
     if (write(s, &buf, sizeof(buf)) < 0) {
-        // XXX: Should this be changed to IESTREAMCONNECT? 
+        // XXX: Should this be changed to IESTREAMCONNECT?
         i_errno = IESTREAMWRITE;
         return -1;
     }

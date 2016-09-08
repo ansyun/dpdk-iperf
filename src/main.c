@@ -77,7 +77,7 @@ main(int argc, char **argv)
         fprintf(stderr, "setting priority to valid level\n");
         rc = setpriority(PRIO_PROCESS, 0, 0);
     }
-    
+
     /* setting the affinity of the process  */
     cpu_set_t cpu_set;
     int affinity = -1;
@@ -129,6 +129,8 @@ sigend_handler(int sig)
 static int
 run(struct iperf_test *test)
 {
+    int consecutive_errors;
+
     /* Termination signals. */
     iperf_catch_sigend(sigend_handler);
     if (setjmp(sigend_jmp_buf))
@@ -143,20 +145,21 @@ run(struct iperf_test *test)
 		    iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 		}
 	    }
+	    consecutive_errors = 0;
 	    if (iperf_create_pidfile(test) < 0) {
 		i_errno = IEPIDFILE;
 		iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
 	    }
             for (;;) {
-		int rc;
-		rc = iperf_run_server(test);
-		if (rc < 0) {
+		if (iperf_run_server(test) < 0) {
 		    iperf_err(test, "error - %s", iperf_strerror(i_errno));
-		    if (rc < -1) {
-		        iperf_errexit(test, "exiting");
+		    ++consecutive_errors;
+		    if (consecutive_errors >= 5) {
+		        iperf_errexit(test, "too many errors, exiting");
 			break;
 		    }
-                }
+                } else
+		    consecutive_errors = 0;
                 iperf_reset_test(test);
                 if (iperf_get_test_one_off(test))
                     break;

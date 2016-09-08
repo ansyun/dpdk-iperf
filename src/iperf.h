@@ -34,7 +34,6 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
-#include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 
@@ -67,7 +66,7 @@ struct iperf_interval_results
 
     int omitted;
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)) && \
-	defined(TCP_INFO)
+        defined(TCP_INFO)
     struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net}BSD */
 #else
     /* Just placeholders, never accessed. */
@@ -104,7 +103,7 @@ struct iperf_stream_result
     void     *data;
 };
 
-#define COOKIE_SIZE 37		/* size of an ascii uuid */
+#define COOKIE_SIZE 37                /* size of an ascii uuid */
 struct iperf_settings
 {
     int       domain;               /* AF_INET or AF_INET6 */
@@ -133,17 +132,17 @@ struct iperf_stream
     int       remote_port;
     int       socket;
     int       id;
-	/* XXX: is settings just a pointer to the same struct in iperf_test? if not, 
-		should it be? */
-    struct iperf_settings *settings;	/* pointer to structure settings */
+        /* XXX: is settings just a pointer to the same struct in iperf_test? if not,
+                should it be? */
+    struct iperf_settings *settings;        /* pointer to structure settings */
 
     /* non configurable members */
-    struct iperf_stream_result *result;	/* structure pointer to result */
+    struct iperf_stream_result *result;        /* structure pointer to result */
     Timer     *send_timer;
     int       green_light;
-    int       buffer_fd;	/* data to send, file descriptor */
-    char      *buffer;		/* data to send, mmapped */
-    int       diskfile_fd;	/* file to send, file descriptor */
+    int       buffer_fd;        /* data to send, file descriptor */
+    char      *buffer;                /* data to send, mmapped */
+    int       diskfile_fd;        /* file to send, file descriptor */
 
     /*
      * for udp measurements - This can be a structure outside stream, and
@@ -213,16 +212,16 @@ struct iperf_test
     int       server_port;
     int       omit;                             /* duration of omit period (-O flag) */
     int       duration;                         /* total duration of test (-t flag) */
-    char     *diskfile_name;			/* -F option */
-    int       affinity, server_affinity;	/* -A option */
+    char     *diskfile_name;                        /* -F option */
+    int       affinity, server_affinity;        /* -A option */
 #if defined(HAVE_CPUSET_SETAFFINITY)
     cpuset_t cpumask;
 #endif /* HAVE_CPUSET_SETAFFINITY */
-    char     *title;				/* -T option */
-    char     *congestion;			/* -C option */
-    char     *pidfile;				/* -P option */
+    char     *title;                            /* -T option */
+    char     *congestion;                       /* -C option */
+    char     *pidfile;                          /* -P option */
 
-    char     *logfile;				/* --logfile option */
+    char     *logfile;                          /* --logfile option */
     FILE     *outfile;
 
     int       ctrl_sck;
@@ -234,22 +233,22 @@ struct iperf_test
     int       one_off;                          /* -1 option */
     int       no_delay;                         /* -N option */
     int       reverse;                          /* -R option */
-    int	      verbose;                          /* -V option - verbose mode */
-    int	      json_output;                      /* -J option - JSON output */
-    int	      zerocopy;                         /* -Z option - use sendfile */
-    int       debug;				/* -d option - enable debug */
-    int	      get_server_output;		/* --get-server-output */
-    int	      udp_counters_64bit;		/* --use-64-bit-udp-counters */
-    int       no_fq_socket_pacing;	  /* --no-fq-socket-pacing */
-    int	      multisend;
+    int       verbose;                          /* -V option - verbose mode */
+    int       json_output;                      /* -J option - JSON output */
+    int       zerocopy;                         /* -Z option - use sendfile */
+    int       debug;                            /* -d option - enable debug */
+    int       get_server_output;                /* --get-server-output */
+    int       udp_counters_64bit;               /* --use-64-bit-udp-counters */
+    int       forceflush; /* --forceflush - flushing output at every interval */
+    int       no_fq_socket_pacing;              /* --no-fq-socket-pacing */
+    int       multisend;
 
     char     *json_output_string; /* rendered JSON output if json_output is set */
-    /* Select related parameters */
-    int       max_fd;
-    fd_set    read_set;                         /* set of read sockets */
-    fd_set    write_set;                        /* set of write sockets */
 
-    /* Interval related members */ 
+    /* Epoll related parameters */
+    int       epoll_fd;
+
+    /* Interval related members */
     int       omitting;
     double    stats_interval;
     double    reporter_interval;
@@ -261,8 +260,8 @@ struct iperf_test
     Timer     *stats_timer;
     Timer     *reporter_timer;
 
-    double cpu_util[3];                            /* cpu utilization of the test - total, user, system */
-    double remote_cpu_util[3];                     /* cpu utilization for the remote host/client - total, user, system */
+    double cpu_util[3];                         /* cpu utilization of the test - total, user, system */
+    double remote_cpu_util[3];                  /* cpu utilization for the remote host/client - total, user, system */
 
     int       num_streams;                      /* total streams in the test (-P) */
 
@@ -305,7 +304,7 @@ struct iperf_test
 #define OMIT 0 /* seconds */
 #define DURATION 10 /* seconds */
 
-#define SEC_TO_NS 1000000000LL	/* too big for enum/const on some platforms */
+#define SEC_TO_NS 1000000000LL        /* too big for enum/const on some platforms */
 #define MAX_RESULT_STRING 4096
 
 /* constants for command line arg sanity checks */
@@ -320,5 +319,9 @@ struct iperf_test
 #define MAX_BURST 1000
 #define MAX_MSS (9 * 1024)
 #define MAX_STREAMS 128
+
+/* epoll globals */
+#define MAX_EPOLL_EVENTS 10
+
 
 #endif /* !__IPERF_H */
