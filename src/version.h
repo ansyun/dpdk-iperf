@@ -24,25 +24,4 @@
  * This code is distributed under a BSD style license, see the LICENSE
  * file for complete information.
  */
-#ifndef __NET_H
-#define __NET_H
-
-int netdial(int domain, int proto, char *local, int local_port, char *server, int port);
-int netannounce(int domain, int proto, char *local, int port);
-int Nread(int fd, char *buf, size_t count, int prot);
-int Nwrite(int fd, const char *buf, size_t count, int prot) /* __attribute__((hot)) */;
-int has_sendfile(void);
-int Nsendfile(int fromfd, int tofd, const char *buf, size_t count) /* __attribute__((hot)) */;
-int getsock_tcp_mss(int inSock);
-int set_tcp_options(int sock, int no_delay, int mss);
-int setnonblocking(int fd, int nonblocking);
-int getsockdomain(int sock);
-
-#ifdef _HAVE_DPDK_ANS_
-void ans_mod_init();
-#endif
-
-#define NET_SOFTERROR -1
-#define NET_HARDERROR -2
-
-#endif /* __NET_H */
+#define IPERF_VERSION "3.1"
