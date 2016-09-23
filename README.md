@@ -35,6 +35,13 @@ EAL: Ask a virtual area of 0x15400000 bytes
 *  Download dpdk-iperf, build dpdk-iperf and startup dpdk-iperf
 ```
 $ git clone https://github.com/opendp/dpdk-iperf.git
-$ ./configure; make;
+dpdk-iperf3 process run on ANS tcp/ip stack.
+iperf3 process run on linux kernel tcp/ip stack.
 
+You may one of below command to compile dpdk-iperf
+$ make all // make dpdk-iperf3 and iperf3
+$ make dpdk-iperf // make dpdk-iperf3 
+$ make iperf // make iperf3
+
+```
 
