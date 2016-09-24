@@ -125,10 +125,6 @@ void ans_mod_init()
     INIT_FUNCTION();
     INIT_FUNCTION();
     INIT_FUNCTION();
-    INIT_FUNCTION();
-    INIT_FUNCTION();
-    INIT_FUNCTION();
-    INIT_FUNCTION();
     */
 
 #undef INIT_FUNCTION
@@ -231,28 +227,6 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
         return real_connect(sockfd, addr, addrlen);
     }
     
-}
-
-/**
- * @param 
- *
- * @return  
- *
- */
-int getsockname (__attribute__((unused))int __fd, __attribute__((unused))__SOCKADDR_ARG __addr, __attribute__((unused)) socklen_t *__restrict __len)
-{
-    return -1;
-}
-
-/**
- * @param 
- *
- * @return  
- *
- */
-int getpeername (__attribute__((unused))int __fd, __attribute__((unused)) __SOCKADDR_ARG __addr, __attribute__((unused)) socklen_t *__restrict __len)
-{
-    return -1;
 }
 
 /**
