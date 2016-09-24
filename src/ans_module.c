@@ -73,6 +73,8 @@ static ssize_t (*real_read)(int, void *, size_t );
 static ssize_t (*real_readv)(int, const struct iovec *, int);
 
 static int (*real_setsockopt)(int, int, int, const void *, socklen_t);
+static int (*real_getpeername)(int , struct sockaddr *, socklen_t *);
+static int (*real_getsockname)(int , struct sockaddr *, socklen_t *);
 
 static int (*real_ioctl)(int, int, void *);
 
@@ -111,6 +113,8 @@ void ans_mod_init()
     INIT_FUNCTION(readv);
 
     INIT_FUNCTION(setsockopt);
+    INIT_FUNCTION(getpeername);
+    INIT_FUNCTION(getsockname);
 
     INIT_FUNCTION(ioctl);
 
@@ -396,19 +400,30 @@ ssize_t sendto(__attribute__((unused)) int sockfd, __attribute__((unused))const 
  * @return  
  *
  */
-
  ssize_t recvfrom(__attribute__((unused))int sockfd, __attribute__((unused))void *buf, __attribute__((unused))size_t len, __attribute__((unused))int flags,
                         __attribute__((unused))struct sockaddr *src_addr, __attribute__((unused))socklen_t *addrlen)
 {
     return -1;
 }
 
+/**
+ * @param 
+ *
+ * @return  
+ *
+ */
  int getsockopt(__attribute__((unused))int sockfd, __attribute__((unused))int level, __attribute__((unused))int optname, 
         __attribute__((unused))void *optval, __attribute__((unused))socklen_t *optlen)
 {
     return -1;
 }
 
+/**
+ * @param 
+ *
+ * @return  
+ *
+ */
 int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
 {
     if (sockfd > ANS_FD_BASE) 
@@ -422,6 +437,47 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
         return real_setsockopt(sockfd, level, optname, optval, optlen);
     }
 }
+
+/**
+ * @param 
+ *
+ * @return  
+ *
+ */
+int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+{
+    if (sockfd > ANS_FD_BASE) 
+    {
+        sockfd -= ANS_FD_BASE;
+
+        return anssock_getpeername(sockfd, addr, addrlen);
+    } 
+    else 
+    {
+        return real_getpeername(sockfd, addr, addrlen);
+    }
+}
+
+/**
+ * @param 
+ *
+ * @return  
+ *
+ */
+int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+{
+    if (sockfd > ANS_FD_BASE) 
+    {
+        sockfd -= ANS_FD_BASE;
+
+        return anssock_getsockname(sockfd, addr, addrlen);
+    } 
+    else 
+    {
+        return real_getsockname(sockfd, addr, addrlen);
+    }
+}
+
 
 /**
  * @param 
