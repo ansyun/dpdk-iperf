@@ -96,10 +96,6 @@ main(int argc, char **argv)
         err("couldn't change CPU affinity");
 #endif
 
-#ifdef _HAVE_DPDK_ANS_
-    ans_mod_init();
-#endif
-
     test = iperf_new_test();
     if (!test)
         iperf_errexit(NULL, "create new test error - %s", iperf_strerror(i_errno));
@@ -111,6 +107,10 @@ main(int argc, char **argv)
         usage_long();
         exit(1);
     }
+
+#ifdef _HAVE_DPDK_ANS_
+    ans_mod_init();
+#endif
 
     if (run(test) < 0)
         iperf_errexit(test, "error - %s", iperf_strerror(i_errno));
