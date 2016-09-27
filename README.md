@@ -2,11 +2,6 @@
 --------------
 Fork from official iperf-3.1.3, and run on the dpdk user space TCP/IP stack(ANS).
 
-
-porting iperf to ANS tcp/ip stack is ongoing, please waiting.......
-
-
-
 ####Build and Install
 --------------
 *  Download latest dpdk version from [dpdk website](http://dpdk.org/), and build dpdk
