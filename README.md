@@ -91,6 +91,10 @@ An unknown state was sent by the client, ignoring it.
 iperf Done.
 
 ```
+####Notes
+-------
+- If you want to use linux iperf3 connect to dpdk-iperf3, the linux iperf3 shall be complied from dpdk-iperf project, not the open source on other website.
+
 ####Support
 -------
 For free support, please use ans team mail list at zimeiw@163.com, or QQ Group:86883521, or https://dpdk-ans.slack.com.
