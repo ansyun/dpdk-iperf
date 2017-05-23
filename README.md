@@ -97,5 +97,5 @@ iperf Done.
 
 #### Support
 -------
-For free support, please use ans team mail list at zimeiw@163.com, or QQ Group:86883521, or https://dpdk-ans.slack.com.
+For free support, please use ans team mail list at anssupport@163.com, or QQ Group:86883521, or https://dpdk-ans.slack.com.
 
