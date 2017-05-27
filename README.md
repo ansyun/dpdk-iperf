@@ -13,7 +13,7 @@ $ export RTE_TARGET=x86_64-native-linuxapp-gcc
 ```
 *  Download ANS following the [ANS wiki](https://github.com/opendp/dpdk-ans/wiki/Compile-APP-with-ans), buld ans and startup ans
 ```
-$ git clone https://github.com/opendp/dpdk-ans.git
+$ git clone https://github.com/ansyun/dpdk-ans.git
 $ export RTE_ANS=/home/mytest/dpdk-ans
 $ ./install_deps.sh
 $ cd ans
@@ -31,7 +31,7 @@ EAL: Ask a virtual area of 0x15400000 bytes
 ```
 *  Download dpdk-iperf and build dpdk-iperf3/iperf3
 ```
-$ git clone https://github.com/opendp/dpdk-iperf.git
+$ git clone https://github.com/ansyun/dpdk-iperf.git
 dpdk-iperf3 process run on ANS tcp/ip stack.
 iperf3 process run on linux kernel tcp/ip stack.
 
