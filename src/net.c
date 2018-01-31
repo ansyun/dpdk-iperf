@@ -111,12 +111,17 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
     }
 
     ((struct sockaddr_in *) server_res->ai_addr)->sin_port = htons(port);
-    if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
-	close(s);
-	freeaddrinfo(server_res);
-        return -1;
+    int try_connect_count = 5;
+    while (try_connect_count-- && \
+		(connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno == EINPROGRESS)) {
+	if (try_connect_count <= 0) {
+	    close(s);
+	    freeaddrinfo(server_res);
+            return -1;
+	}
+        sleep(1);
     }
-
+    
     freeaddrinfo(server_res);
     return s;
 }
