@@ -109,7 +109,7 @@ main(int argc, char **argv)
     }
 
 #ifdef _HAVE_DPDK_ANS_
-    ans_mod_init();
+    ans_mod_init(test->file_prefix);
 #endif
 
     if (run(test) < 0)

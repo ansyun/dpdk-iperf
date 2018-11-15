@@ -44,7 +44,7 @@
 #include <sys/epoll.h>
 #include <assert.h>
  #include <unistd.h>
- 
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -71,14 +71,14 @@
 #include <dlfcn.h>
 
 
-/* 
+/*
  *  opendp socket fd large than linux "ulimit -n " value
- *  
+ *
 */
 #define ANS_FD_BASE 2000
 
 /* 1: redis socket will go through opendp stack, 0: go through linux stack */
-int ans_sock_enable = 1; 
+int ans_sock_enable = 1;
 
 int ansfd_debug_flag = 0;
 
@@ -87,7 +87,7 @@ int ansfd_debug_flag = 0;
     if(ansfd_debug_flag == 1)   \
         printf(fmt ,  ## args);  \
   } while (0)
-  
+
 static int inited = 0;
 
 static int (*real_close)(int);
@@ -117,15 +117,15 @@ static int (*real_epoll_ctl)(int, int, int, struct epoll_event *);
 static int (*real_epoll_wait)(int, struct epoll_event *, int, int);
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
-void ans_mod_init()
+void ans_mod_init(char *prefix)
 {
     int rc;
-       
+
 #define INIT_FUNCTION(func) \
         real_##func = dlsym(RTLD_NEXT, #func); \
         assert(real_##func)
@@ -140,7 +140,7 @@ void ans_mod_init()
     INIT_FUNCTION(recv);
     INIT_FUNCTION(send);
     INIT_FUNCTION(shutdown);
-    
+
     INIT_FUNCTION(writev);
     INIT_FUNCTION(write);
     INIT_FUNCTION(read);
@@ -155,7 +155,7 @@ void ans_mod_init()
     INIT_FUNCTION(epoll_create);
     INIT_FUNCTION(epoll_ctl);
     INIT_FUNCTION(epoll_wait);
-   /*    
+   /*
     INIT_FUNCTION();
     INIT_FUNCTION();
     INIT_FUNCTION();
@@ -169,46 +169,50 @@ void ans_mod_init()
         return;
     }
 
-    rc = anssock_init(NULL);
+    if (prefix) {
+        rc = anssock_init(prefix);
+    } else {
+        rc = anssock_init(NULL);
+    }
     assert(0 == rc);
 
     inited = 1;
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int socket(int domain, int type, int protocol)
 {
     int rc;
 
-     ANS_FD_DEBUG("socket create start , domain %d, type %d \n", domain, type);    
-   
+     ANS_FD_DEBUG("socket create start , domain %d, type %d \n", domain, type);
+
     if ((inited == 0) ||  (AF_INET != domain) || (SOCK_STREAM != type && SOCK_DGRAM != type))
     {
         rc = real_socket(domain, type, protocol);
-        ANS_FD_DEBUG("linux socket fd %d \n", rc);    
+        ANS_FD_DEBUG("linux socket fd %d \n", rc);
 
         return rc;
     }
 
     assert(inited);
     rc = anssock_socket(domain, type, protocol);
-    
+
     if(rc > 0)
         rc += ANS_FD_BASE;
-    
-    ANS_FD_DEBUG("ans socket fd %d \n", rc);    
+
+    ANS_FD_DEBUG("ans socket fd %d \n", rc);
     return rc;
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int socketpair (__attribute__((unused)) int __domain, __attribute__((unused)) int __type,__attribute__((unused))  int __protocol, __attribute__((unused)) int __fds[2])
@@ -217,33 +221,33 @@ int socketpair (__attribute__((unused)) int __domain, __attribute__((unused)) in
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
-    struct sockaddr_in *in_addr; 
+    struct sockaddr_in *in_addr;
     in_addr = (struct sockaddr_in *)addr;
 
     ANS_FD_DEBUG("bind ip: %x , port %d, family:%d \n", in_addr->sin_addr.s_addr, ntohs(in_addr->sin_port), in_addr->sin_family);
 
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
         return anssock_bind(sockfd, addr, addrlen);
-    } 
-    else 
+    }
+    else
     {
         return real_bind(sockfd, addr, addrlen);
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
@@ -251,43 +255,43 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 
     ANS_FD_DEBUG("fd(%d) start to connect \n", sockfd);
 
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
         return anssock_connect(sockfd, addr, addrlen);
-    } 
-    else 
+    }
+    else
     {
         return real_connect(sockfd, addr, addrlen);
     }
-    
+
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 ssize_t send (int sockfd, const void *buf, size_t len, int flags)
 {
     ssize_t n;
-    
+
     ANS_FD_DEBUG("send data fd %d , len %lu \n", sockfd, len);
 
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
         ANS_FD_DEBUG("ans send data fd %d , len %lu \n", sockfd, len);
 
-        n = anssock_send(sockfd, buf, len, flags);  
-        
+        n = anssock_send(sockfd, buf, len, flags);
+
         ANS_FD_DEBUG("ans send: fd %d , len %lu, return value:%ld, errno:%d, strerror = %s \n", sockfd, len, n, errno, strerror(errno));
 
         return n;
 
     }
-    else 
+    else
     {
         ANS_FD_DEBUG("linux send data fd %d , len %lu \n", sockfd, len);
 
@@ -296,9 +300,9 @@ ssize_t send (int sockfd, const void *buf, size_t len, int flags)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 ssize_t write(int fd, const void *buf, size_t count)
@@ -307,38 +311,38 @@ ssize_t write(int fd, const void *buf, size_t count)
 
 //    ANS_FD_DEBUG("write data fd %d , len %lu \n", fd, count);
 
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
 
         n = anssock_write(fd, buf, count);
-        
+
         ANS_FD_DEBUG("ans write: fd %d , len %lu, return value:%ld, errno:%d, strerror = %s \n", fd, count, n, errno, strerror(errno));
 
         return n;
 
     }
-    else 
+    else
     {
 
         n = real_write(fd, buf, count);
-        
+
         ANS_FD_DEBUG("linux write: fd %d , len %lu, return value:%ld, errno:%d, strerror = %s \n", fd, count, n, errno, strerror(errno));
-     
+
         return n;
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 ssize_t recv(int sockfd, void *buf, size_t len, int flags)
 {
     ssize_t rc;
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
 
@@ -351,36 +355,36 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags)
         ANS_FD_DEBUG("ans fd %d recv data len %ld \n", sockfd, rc);
 
         return rc;
-    } 
+    }
     else
     {
         rc = real_recv(sockfd, buf, len, flags);
 
         ANS_FD_DEBUG("linux fd %d recv data len %ld \n", sockfd, rc);
-        
+
         return rc;
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 ssize_t read(int fd, void *buf, size_t count)
 {
     ssize_t rc;
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
 
         rc = anssock_read(fd, buf, count);
 
         ANS_FD_DEBUG("ans fd %d read data len %ld, %d \n", fd, rc, errno);
-        
+
         return rc;
-    } 
+    }
     else
     {
         rc =real_read(fd, buf, count);
@@ -391,9 +395,9 @@ ssize_t read(int fd, void *buf, size_t count)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 ssize_t sendto(__attribute__((unused)) int sockfd, __attribute__((unused))const void *buf, __attribute__((unused))size_t len, __attribute__((unused))int flags,
@@ -403,9 +407,9 @@ ssize_t sendto(__attribute__((unused)) int sockfd, __attribute__((unused))const 
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
  ssize_t recvfrom(__attribute__((unused))int sockfd, __attribute__((unused))void *buf, __attribute__((unused))size_t len, __attribute__((unused))int flags,
@@ -415,72 +419,72 @@ ssize_t sendto(__attribute__((unused)) int sockfd, __attribute__((unused))const 
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
- int getsockopt(__attribute__((unused))int sockfd, __attribute__((unused))int level, __attribute__((unused))int optname, 
+ int getsockopt(__attribute__((unused))int sockfd, __attribute__((unused))int level, __attribute__((unused))int optname,
         __attribute__((unused))void *optval, __attribute__((unused))socklen_t *optlen)
 {
     return -1;
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
 {
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
 
         return anssock_setsockopt(sockfd, level, optname, optval, optlen);
-    } 
-    else 
+    }
+    else
     {
         return real_setsockopt(sockfd, level, optname, optval, optlen);
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
 
         return anssock_getpeername(sockfd, addr, addrlen);
-    } 
-    else 
+    }
+    else
     {
         return real_getpeername(sockfd, addr, addrlen);
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
 
         return anssock_getsockname(sockfd, addr, addrlen);
-    } 
-    else 
+    }
+    else
     {
         return real_getsockname(sockfd, addr, addrlen);
     }
@@ -488,40 +492,40 @@ int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int listen(int sockfd, int backlog)
 {
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
-        
+
         ANS_FD_DEBUG("ans listen fd %d, pid %d \n", sockfd, getpid());
-        
+
         return anssock_listen(sockfd, backlog);
     }
     else
     {
         ANS_FD_DEBUG("linux listen fd %d , pid %d \n", sockfd, getpid());
-  
+
         return real_listen(sockfd, backlog);
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     int rc;
 
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
 
@@ -531,8 +535,8 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
         ANS_FD_DEBUG("ans accept fd %d \n", rc);
         if(rc > 0 )
             rc += ANS_FD_BASE;
-    } 
-    else 
+    }
+    else
     {
         rc = real_accept(sockfd, addr, addrlen);
         ANS_FD_DEBUG("linux accept fd %d \n", rc);
@@ -542,29 +546,29 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags)
 {
     int rc;
 
-    if (sockfd > ANS_FD_BASE) 
+    if (sockfd > ANS_FD_BASE)
     {
         sockfd -= ANS_FD_BASE;
 
         rc = anssock_accept(sockfd, addr, addrlen);
         addr->sa_family = AF_INET;
-        
+
         ANS_FD_DEBUG("ans accep4t fd %d, errno %d \n", rc, errno);
-        
+
         if(rc > 0 )
             rc += ANS_FD_BASE;
 
-    } 
-    else 
+    }
+    else
     {
         rc = real_accept4(sockfd, addr, addrlen, flags);
         ANS_FD_DEBUG("linux accept4 fd %d, errno %d \n", rc, errno);
@@ -573,21 +577,21 @@ int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int shutdown (int fd, int how)
 {
     ANS_FD_DEBUG("ans shutdown fd %d, how %d,  pid %d \n", fd, how, getpid());
 
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
 
         return anssock_shutdown(fd, how);;
-    } 
+    }
     else
     {
         return real_shutdown(fd, how);
@@ -595,14 +599,14 @@ int shutdown (int fd, int how)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int close(int fd)
 {
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
 
@@ -613,15 +617,15 @@ int close(int fd)
     else
     {
      //   ANS_FD_DEBUG("linux close fd %d \n", fd);
-     
+
         return real_close(fd);
     }
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int epoll_create (int size)
@@ -630,16 +634,16 @@ int epoll_create (int size)
 
     ANS_FD_DEBUG("epoll create  start, EPOLL_CTL_ADD %d ,EPOLL_CTL_DEL %d, EPOLLOUT 0x%x, EPOLLIN:0x%x \n", EPOLL_CTL_ADD, EPOLL_CTL_DEL, EPOLLOUT, EPOLLIN);
 
-    if (inited == 1) 
+    if (inited == 1)
     {
         rc = anssock_epoll_create(size);
         if(rc > 0)
             rc += ANS_FD_BASE;
-        
+
          ANS_FD_DEBUG("ans epoll fd %d \n", rc);
-      
-    } 
-    else 
+
+    }
+    else
     {
         rc = real_epoll_create(size);
         ANS_FD_DEBUG("linux epoll fd %d \n", rc);
@@ -648,9 +652,9 @@ int epoll_create (int size)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int epoll_create1 (__attribute__((unused))int __flags)
@@ -659,9 +663,9 @@ int epoll_create1 (__attribute__((unused))int __flags)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
@@ -670,7 +674,7 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 
     ANS_FD_DEBUG("epoll ctl  start, epfd %d ,op %d, fd %d, event:0x%x \n", epfd, op, fd, event->events);
 
-    if (epfd > ANS_FD_BASE) 
+    if (epfd > ANS_FD_BASE)
     {
         if(fd <= ANS_FD_BASE)
         {
@@ -682,7 +686,7 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 
         rc = anssock_epoll_ctl(epfd, op, fd, event);
     }
-    else 
+    else
     {
         if(fd > ANS_FD_BASE)
         {
@@ -699,17 +703,17 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 {
     int rc;
 
-    if (epfd > ANS_FD_BASE) 
+    if (epfd > ANS_FD_BASE)
     {
         epfd -= ANS_FD_BASE;
 
-     //   ANS_FD_DEBUG("ans epoll_wait: fd %d maxevents %d , timeout %d \n", epfd, maxevents, timeout);       
- 
+     //   ANS_FD_DEBUG("ans epoll_wait: fd %d maxevents %d , timeout %d \n", epfd, maxevents, timeout);
+
         rc = anssock_epoll_wait(epfd, events, maxevents, timeout);
     }
     else
     {
-      //  ANS_FD_DEBUG("linux epoll_wait: fd %d maxevents %d , timeout %d \n", epfd, maxevents, timeout);       
+      //  ANS_FD_DEBUG("linux epoll_wait: fd %d maxevents %d , timeout %d \n", epfd, maxevents, timeout);
 
         rc = real_epoll_wait(epfd, events, maxevents, timeout);
     }
@@ -717,9 +721,9 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int epoll_pwait (__attribute__((unused))int __epfd, __attribute__((unused))struct epoll_event *__events, __attribute__((unused))int __maxevents,
@@ -730,20 +734,20 @@ int epoll_pwait (__attribute__((unused))int __epfd, __attribute__((unused))struc
 
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 int ioctl(int fd, int request, void *p)
 {
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
 
         //return anssock_ioctl(fd, request, p);
         return 0;
-    } 
+    }
     else
     {
         return real_ioctl(fd, request, p);
@@ -752,23 +756,23 @@ int ioctl(int fd, int request, void *p)
 
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt)
 {
     ssize_t rc;
 
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
-        
+
         ANS_FD_DEBUG("ans writev data fd %d , iovcnt %d \n", fd, iovcnt);
         rc = anssock_writev(fd, iov, iovcnt);
     }
-    else 
+    else
     {
      //   ANS_FD_DEBUG("linux writev data fd %d , len %d \n", fd, iovcnt);
 
@@ -778,23 +782,23 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt)
 }
 
 /**
- * @param 
+ * @param
  *
- * @return  
+ * @return
  *
  */
  ssize_t readv(int fd, const struct iovec *iov, int iovcnt)
 {
     ssize_t rc;
 
-    if (fd > ANS_FD_BASE) 
+    if (fd > ANS_FD_BASE)
     {
         fd -= ANS_FD_BASE;
 
         ANS_FD_DEBUG("ans fd %d readv with iovcnt %d \n", fd, iovcnt);
         rc =anssock_readv(fd, iov, iovcnt);
         return rc;
-    } 
+    }
     else
     {
         rc =real_readv(fd, iov, iovcnt);
@@ -804,6 +808,3 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt)
 
 
 }
-
-    
-
