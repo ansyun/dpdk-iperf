@@ -42,51 +42,70 @@ $ make iperf // make iperf3
 
 ```
 
-*  Startup dpdk-iperf3/iperf3
+*  run dpdk-iperf3 on ans side
 ```
-# ./dpdk_iperf3  -s --bind 10.0.0.2
-...
-USER8: LCORE[0] anssock app lcoreId: 0
-skip linux fd 5
+/dpdk-iperf# ./dpdk_iperf3 -s --bind 10.0.0.2
+EAL: Detected 40 lcore(s)
+EAL: Detected 2 NUMA nodes
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket_39587_4958d65583aec4
+EAL: Probing VFIO support...
+USER8: LCORE[-1] anssock any lcore id 0xffffffff
+USER8: LCORE[10] anssock app id: 39587
+USER8: LCORE[10] anssock app name: dpdk_iperf3
+USER8: LCORE[10] anssock app lcoreId: 10
+USER8: LCORE[10] mp ops number 4, mp ops index: 0
+USER8: LCORE[10] setsockopt: not support optname 2
 -----------------------------------------------------------
 Server listening on 5201
 -----------------------------------------------------------
-...
-[2020]   7.00-8.00   sec   113 MBytes   949 Mbits/sec
-iperf3: getsockopt - Success
-[2020]   8.00-9.00   sec   113 MBytes   949 Mbits/sec
-iperf3: getsockopt - Success
-[2020]   9.00-10.00  sec   113 MBytes   949 Mbits/sec
-iperf3: getsockopt - Success
-[2020]  10.00-10.00  sec   163 KBytes   942 Mbits/sec
+fcntl(F_GETFL): Bad file descriptor
+Accepted connection from ::2300:0:0:0, port 44544
+An unknown state was sent by the client, ignoring it.
+fcntl(F_GETFL): Bad file descriptor
+[2036] local :: port 5201 connected to :: port 44546
+[ ID] Interval           Transfer     Bandwidth
+[2036]   0.00-1.00   sec  1.05 GBytes  9.03 Gbits/sec
+[2036]   1.00-2.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   2.00-3.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   3.00-4.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   4.00-5.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   5.00-6.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   6.00-7.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   7.00-8.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   8.00-9.00   sec  1.10 GBytes  9.41 Gbits/sec
+[2036]   9.00-10.00  sec  1.10 GBytes  9.41 Gbits/sec
+[2036]  10.00-10.04  sec  40.9 MBytes  9.41 Gbits/sec
 - - - - - - - - - - - - - - - - - - - - - - - - -
 [ ID] Interval           Transfer     Bandwidth
-[2020]   0.00-10.00  sec  0.00 Bytes  0.00 bits/sec                  sender
-[2020]   0.00-10.00  sec  1.11 GBytes   949 Mbits/sec                receiver
+[2036]   0.00-10.04  sec  0.00 Bytes  0.00 bits/sec                  sender
+[2036]   0.00-10.04  sec  11.0 GBytes  9.38 Gbits/sec                  receiver
 An unknown state was sent by the client, ignoring it.
+USER8: LCORE[10] setsockopt: not support optname 2
 -----------------------------------------------------------
 Server listening on 5201
 -----------------------------------------------------------
-
-# ./iperf3 -c 10.0.0.2
+```
+*  run iperf3 on linux side
+```
+/dpdk-iperf# ./iperf3 -c 10.0.0.2
 Connecting to host 10.0.0.2, port 5201
-[  5] local 10.0.0.10 port 40550 connected to 10.0.0.2 port 5201
+[  5] local 10.0.0.10 port 44546 connected to 10.0.0.2 port 5201
 [ ID] Interval           Transfer     Bandwidth       Retr  Cwnd
-[  5]   0.00-1.00   sec   114 MBytes   953 Mbits/sec    0   94.1 KBytes
-[  5]   1.00-2.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   2.00-3.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   3.00-4.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   4.00-5.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   5.00-6.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   6.00-7.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   7.00-8.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
-[  5]   8.00-9.00   sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
+[  5]   0.00-1.00   sec  1.09 GBytes  9.39 Gbits/sec    0    694 KBytes
+[  5]   1.00-2.00   sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
+[  5]   2.00-3.00   sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
+[  5]   3.00-4.00   sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
+[  5]   4.00-5.00   sec  1.09 GBytes  9.41 Gbits/sec    0    694 KBytes
+[  5]   5.00-6.00   sec  1.10 GBytes  9.42 Gbits/sec    0    694 KBytes
+[  5]   6.00-7.00   sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
+[  5]   7.00-8.00   sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
+[  5]   8.00-9.00   sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
 An unknown state was sent by the client, ignoring it.
-[  5]   9.00-10.00  sec   113 MBytes   949 Mbits/sec    0   94.1 KBytes
+[  5]   9.00-10.00  sec  1.10 GBytes  9.41 Gbits/sec    0    694 KBytes
 - - - - - - - - - - - - - - - - - - - - - - - - -
 [ ID] Interval           Transfer     Bandwidth       Retr
-[  5]   0.00-10.00  sec  1.11 GBytes   950 Mbits/sec    0             sender
-[  5]   0.00-10.00  sec  1.11 GBytes   949 Mbits/sec                  receiver
+[  5]   0.00-10.00  sec  11.0 GBytes  9.41 Gbits/sec    0             sender
+[  5]   0.00-10.00  sec  11.0 GBytes  9.41 Gbits/sec                  receiver
 
 iperf Done.
 
