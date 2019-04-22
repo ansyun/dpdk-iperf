@@ -52,6 +52,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <sys/epoll.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -98,10 +99,14 @@ save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)
 #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)) && \
 	defined(TCP_INFO)
     socklen_t tcp_info_length = sizeof(struct tcp_info);
+    int ret;
 
-    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)
+    /* ans return -2 */
+    ret = getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length);
+    if (ret < 0 && ret != -2)
+    {
 	iperf_err(sp->test, "getsockopt - %s", strerror(errno));
-
+    }
     if (sp->test->debug) {
 	printf("tcpi_snd_cwnd %u tcpi_snd_mss %u tcpi_rtt %u\n",
 	       irp->tcpInfo.tcpi_snd_cwnd, irp->tcpInfo.tcpi_snd_mss,

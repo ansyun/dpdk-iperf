@@ -30,6 +30,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/epoll.h>
+
 #include "iperf.h"
 #include "iperf_api.h"
 

@@ -45,6 +45,7 @@
 #include <stdint.h>
 #endif
 #include <netinet/tcp.h>
+#include <sys/epoll.h>
 
 #include "iperf.h"
 #include "iperf_api.h"

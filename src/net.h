@@ -39,7 +39,7 @@ int setnonblocking(int fd, int nonblocking);
 int getsockdomain(int sock);
 
 #ifdef _HAVE_DPDK_ANS_
-void ans_mod_init(char *prefix);
+void ans_mod_init(char *file_prefix);
 #endif
 
 #define NET_SOFTERROR -1
